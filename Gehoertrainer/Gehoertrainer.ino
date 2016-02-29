@@ -11,10 +11,10 @@ LiquidCrystal_I2C lcd(0x27,20,4);
  * D9 = Speaker
  * D2 = Button Enter (INT0)
  * D3 = Button DOWN (INT1)
- * D4 = Button UP
+ * D4 = Button UP   <-- UP / DOWN maybe switched -> change in getButton()
  */
 
- //TODO: Fix Auswahl-Bug, Metronom
+ //TODO: echter Mischer per timer2 und sinustabelle, um Schwebung zu hören (max. 8kHz sampling)
 
 //Stimmung: Halbtonfaktor = 2^(1/12)
 #define WURZEL(n,x) pow(x, 1.0/n)
@@ -45,7 +45,7 @@ void setup() {
   pinMode(2,INPUT_PULLUP);
   pinMode(3,INPUT_PULLUP);
   pinMode(4,INPUT_PULLUP);
-  Timer1.initialize(1000000/50);
+  Timer1.initialize(1000000/50); //50 Hz
 
   randomSeed(analogRead(0));
 }
