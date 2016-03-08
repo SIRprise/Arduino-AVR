@@ -1,6 +1,8 @@
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
 #include <TimerOne.h>
+#include <DebouncedInput.h>
+#include <polytone.h>
 
 LiquidCrystal_I2C lcd(0x27,20,4);
 
@@ -8,7 +10,7 @@ LiquidCrystal_I2C lcd(0x27,20,4);
  * Arduino Nano
  * A4=SDA (LCD)
  * A5=SCL (LCD)
- * D9 = Speaker
+ * D11 = Speaker
  * D2 = Button Enter (INT0)
  * D3 = Button DOWN (INT1)
  * D4 = Button UP   <-- UP / DOWN maybe switched -> change in getButton()
@@ -21,14 +23,14 @@ LiquidCrystal_I2C lcd(0x27,20,4);
 #define HALBTONFAKTOR WURZEL(12,2)
 //#define HALBTONFAKTOR 1.059463094359295264561825294946341700779204317494185628559
 
-#define BTN_ENTER 1
-#define BTN_UP 2
+#define BTN_ENTER 2
+#define BTN_UP 4
 #define BTN_DOWN 3
+
+DebouncedInput di;
 
 void soundfrq(double frq);
 void playsnd(double frq,int ms);
-int getButton();
-int getButtonBusy();
 int mainmnu();
 void training(double percent);
 void tuner();
@@ -42,9 +44,8 @@ void setup() {
   lcd.print("Geh\357rtrainer");
 
   //pinMode(9, OUTPUT);
-  pinMode(2,INPUT_PULLUP);
-  pinMode(3,INPUT_PULLUP);
-  pinMode(4,INPUT_PULLUP);
+  int inputPins[] = {BTN_ENTER,BTN_UP,BTN_DOWN};
+  di.init(inputPins, 3);
   Timer1.initialize(1000000/50); //50 Hz
 
   randomSeed(analogRead(0));
@@ -89,13 +90,13 @@ void loop() {
 
 void soundfrq(double frq) {
   if(frq < 50) {
-    Timer1.disablePwm(9);
+    Timer1.disablePwm(11);
     //Timer1.detachInterrupt(speaker);
     //digitalWrite(9, LOW);
   }else{
     //Timer1.initialize(1000000/frq);
     //Timer1.attachInterrupt(speaker);
-    Timer1.pwm(9,512,1000000/frq);
+    Timer1.pwm(11,512,1000000/frq);
   }
 }
 
@@ -103,31 +104,6 @@ void playsnd(double frq,int ms) {
   soundfrq(frq);
   delay(ms);
   soundfrq(0);
-}
-
-int getButton() {
-  if (digitalRead(2) == LOW){
-    while(digitalRead(2)==LOW);
-    return BTN_ENTER;
-  }
-  if (digitalRead(4) == LOW){
-    while(digitalRead(4)==LOW);
-    return BTN_UP;
-  }
-  if (digitalRead(3) == LOW){
-    while(digitalRead(3)==LOW);
-    return BTN_DOWN; 
-  } 
-  return 0;
-}
-
-int getButtonBusy() {
-  int buttonstate=0;
-  
-  while(buttonstate==0)
-      buttonstate=getButton();
-  
-  return buttonstate;
 }
 
 int mainmnu() {
@@ -162,7 +138,7 @@ int mainmnu() {
               break;
     }
     
-    buttonstate=getButtonBusy();
+    buttonstate=di.getButtonBusy();
       
     if(buttonstate==BTN_DOWN){
       if(modestate==9){
@@ -206,7 +182,7 @@ void training(double percent) {
 
   lcd.setCursor(0,1);
   lcd.print("h\357her/tiefer?");
-  buttonstate=getButtonBusy();
+  buttonstate=di.getButtonBusy();
   if((higher==1)&&(buttonstate==BTN_UP)){
     lcd.setCursor(0,1);
     lcd.print("korrekt!  :-)    ");
@@ -244,7 +220,7 @@ void tuner() {
   lcd.print(tuningstr+" Hz    ");
   
   do{
-    buttonstate=getButtonBusy();
+    buttonstate=di.getButtonBusy();
     switch(buttonstate){
       case BTN_UP:    tuning=tuning+0.5;
                       break;
@@ -281,7 +257,7 @@ void tuner() {
               break;
     }   
     
-    buttonstate=getButtonBusy();
+    buttonstate=di.getButtonBusy();
     //TODO Zustandszahl absichern:
     switch(buttonstate){
       case BTN_UP:    if(tunerstate!=0)
@@ -300,31 +276,6 @@ void tuner() {
   }
 }
 
-//Abfrageroutine die Zeitpunkt des Drückens statt Loslassens nimmt
-unsigned long metrGetButtonBusyTime() {
-  bool pressed=false;
-  unsigned long temptime;
-  
-  while(pressed==false){
-    if ((digitalRead(2) == LOW) || (digitalRead(4) == LOW) || (digitalRead(3) == LOW)){
-      pressed=true; 
-    } 
-  }
-  
-  temptime=millis();
-  delay(10);
-
-  //warten bis finger vom knopf ist 
-  while(pressed==true){
-    if ((digitalRead(2) == HIGH) && (digitalRead(4) == HIGH) && (digitalRead(3) == HIGH)){
-      pressed=false; 
-    } 
-  }
-
-  delay(10);
-  return temptime;
-}
-
 void metronom() {
   unsigned long times[4];
   unsigned long ms;
@@ -337,7 +288,7 @@ void metronom() {
   delay(1000);
 
   for(int i=0;i<4;i++){
-    times[i]=metrGetButtonBusyTime();
+    times[i]=di.metrGetButtonBusyTime();
   }
 
   for(int i=1;i<4;i++){
