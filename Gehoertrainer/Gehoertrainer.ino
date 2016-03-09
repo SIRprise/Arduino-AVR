@@ -70,6 +70,7 @@ void loop() {
     case 0: polytone::init();
             while(1){
               polytone::kanon();
+			  delay(3000);
             }
             break;
     case 1: training(5);
