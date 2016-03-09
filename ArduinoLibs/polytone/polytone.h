@@ -21,6 +21,7 @@ namespace polytone {
   void playSolo(float freq, float vol, uint16_t delayms);
   void startPlayback();
   void stopPlayback();
+  void kanon(); //demo
 }
 
 #endif
