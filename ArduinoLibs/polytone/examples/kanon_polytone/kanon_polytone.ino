@@ -52,7 +52,7 @@ void setup()
 
 void loop()
 {
-  
+  kanon();
   float F[2]={2*kanonMelodie[7],2*kanonBegleit[7]};
   float vols[2]={1,0.2};
   polytone::play(F,vols,2,2500);
