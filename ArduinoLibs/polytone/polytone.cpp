@@ -177,7 +177,7 @@ float kanonBegleit[8]={FS5,E5,D5,CS5,H4,A4,H4,CS5};
 
 void polytone::kanon()
 {
-  for(int i=0;i<7;i++)
+  for(int i=0;i<8;i++)
   {
     float F[2]={2*kanonMelodie[i],2*kanonBegleit[i]};
     float vols[2]={1,0.2};
