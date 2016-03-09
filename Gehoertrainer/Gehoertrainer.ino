@@ -43,14 +43,14 @@ void setup() {
   lcd.setCursor(0,0);
   lcd.print("Geh\357rtrainer");
 
-  //pinMode(9, OUTPUT);
+  pinMode(11, OUTPUT);
   int inputPins[] = {BTN_ENTER,BTN_UP,BTN_DOWN};
   di.init(inputPins, 3);
   Timer1.initialize(1000000/50); //50 Hz
 
   randomSeed(analogRead(0));
 }
-/*
+
 int speakerState = LOW;
 
 void speaker(void)
@@ -60,14 +60,17 @@ void speaker(void)
   } else {
     speakerState = LOW;
   }
-  digitalWrite(9, speakerState);
+  digitalWrite(11, speakerState);
 }
-*/
+
 void loop() {
   int option = mainmnu();
   //int option=6;
   switch(option) {
-    case 0: training(10);
+    case 0: polytone::init();
+            while(1){
+              polytone::kanon();
+            }
             break;
     case 1: training(5);
             break;
@@ -90,13 +93,13 @@ void loop() {
 
 void soundfrq(double frq) {
   if(frq < 50) {
-    Timer1.disablePwm(11);
-    //Timer1.detachInterrupt(speaker);
-    //digitalWrite(9, LOW);
+    //Timer1.disablePwm(11); //Pin11 is no PWM pin of Timer1
+    Timer1.detachInterrupt();
+    digitalWrite(11, LOW);
   }else{
-    //Timer1.initialize(1000000/frq);
-    //Timer1.attachInterrupt(speaker);
-    Timer1.pwm(11,512,1000000/frq);
+    Timer1.initialize(1000000/(2*frq));
+    Timer1.attachInterrupt(speaker);
+    //Timer1.pwm(11,512,1000000/frq); //Pin11 is no PWM pin of Timer1
   }
 }
 
@@ -116,7 +119,7 @@ int mainmnu() {
     buttonstate=0;
     lcd.setCursor(0,1);
     switch(modestate) {
-      case 0: lcd.print("Training 10\45    ");
+      case 0: lcd.print("Polytone-Demo    ");
               break;
       case 1: lcd.print("Training 5\45     ");
               break;
